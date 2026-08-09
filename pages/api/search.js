@@ -7,6 +7,7 @@ const GEMINI_URL =
 async function interpretQuery(userQuery) {
   const apiKey = process.env.GEMINI_API_KEY;
 
+  
   const prompt = `You analyze shopping requests (written in Arabic or English) and turn them into precise English search keywords for an AliExpress store.
 
 Rules:

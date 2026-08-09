@@ -8,6 +8,7 @@ export default function Home() {
   const [products, setProducts] = useState(null);
   const [mode, setMode] = useState("trending"); // "trending" | "search"
 
+  
   useEffect(() => {
     loadTrending();
   }, []);

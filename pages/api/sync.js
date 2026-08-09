@@ -2,6 +2,7 @@ import { rawSearch } from "../../lib/aliexpress";
 import { normalizeProduct } from "../../lib/normalize";
 import { getSupabase } from "../../lib/supabase";
 
+
 // كلمات البذرة (seed keywords) — الفئات الأساسية اللي هنسحبها بشكل دوري.
 // وسّع القائمة دي براحتك لما تحب تضيف فئات جديدة للموقع.
 // كل كلمة بتسحب لحد 50 منتج، فكل ما زودت الكلمات كل ما القاعدة كبرت.
