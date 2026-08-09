@@ -101,7 +101,8 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Something went wrong, please try again" });
+    // مؤقتاً: نرجع تفاصيل الخطأ عشان نشخص المشكلة، هنشيلها بعد الحل
+    return res.status(500).json({ error: `Debug: ${err.message}` });
   }
 }
 
