@@ -1,4 +1,5 @@
 import { getSupabase } from "../../lib/supabase";
+import { searchProducts as liveSearch } from "../../lib/aliexpress";
 
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
@@ -7,7 +8,6 @@ const GEMINI_URL =
 async function interpretQuery(userQuery) {
   const apiKey = process.env.GEMINI_API_KEY;
 
-  
   const prompt = `You analyze shopping requests (written in Arabic or English) and turn them into precise English search keywords for an AliExpress store.
 
 Rules:
@@ -69,16 +69,65 @@ export default async function handler(req, res) {
 
   try {
     const interpreted = await interpretQuery(query);
-    const products = await searchDatabase(interpreted);
+
+    let products = await searchDatabase(interpreted);
+    let source = "database";
+
+    // لو القاعدة المتزامنة معندهاش نتيجة (كلمة برة الفئات اللي عندنا)،
+    // نلجأ للبحث الحي في AliExpress كخط دعم — أبطأ شوية، بس بيغطي أي منتج
+    if (products.length === 0) {
+      products = await liveSearch({
+        keywords: interpreted.keywords,
+        minPrice: interpreted.min_price,
+        maxPrice: interpreted.max_price,
+        sort: interpreted.sort,
+      });
+      source = "live";
+
+      // نضيف اللي لقيناه للقاعدة عشان المرة الجاية يبقى سريع.
+      // لازم ننتظرها (await) هنا لأن Vercel بيوقف تنفيذ أي كود بعد
+      // إرسال الرد للمستخدم مباشرة — عملية في الخلفية مش مضمونة تكمل.
+      try {
+        await cacheLiveResults(products, interpreted.keywords);
+      } catch (e) {
+        console.error("Caching live results failed:", e.message);
+      }
+    }
 
     return res.status(200).json({
       interpreted,
       products,
+      source, // مفيد للتشخيص: هل جت من القاعدة السريعة ولا البحث الحي
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Something went wrong, please try again" });
   }
+}
+
+async function cacheLiveResults(products, seedKeyword) {
+  if (!products || products.length === 0) return;
+  const { normalizeProduct } = await import("../../lib/normalize");
+  const supabase = getSupabase();
+
+  const rows = products.map((p) =>
+    normalizeProduct(
+      {
+        product_id: p.id,
+        product_title: p.title,
+        product_main_image_url: p.image,
+        target_sale_price: p.price,
+        target_original_price: p.originalPrice,
+        target_sale_price_currency: p.currency,
+        evaluate_rate: p.rating,
+        lastest_volume: p.orders,
+        promotion_link: p.affiliateLink,
+      },
+      seedKeyword
+    )
+  );
+
+  await supabase.from("products").upsert(rows, { onConflict: "provider,provider_product_id" });
 }
 
 async function searchDatabase({ keywords, min_price, max_price, sort }) {

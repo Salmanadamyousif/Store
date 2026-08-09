@@ -14,7 +14,6 @@ Vercel Cron (daily)
           → saves into Supabase (Postgres)
 
 User visits site / searches
-   
       ↓
 /api/trending or /api/search → reads from Supabase (fast, no live API call)
 ```

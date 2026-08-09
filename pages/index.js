@@ -6,9 +6,9 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [interpreted, setInterpreted] = useState(null);
   const [products, setProducts] = useState(null);
+  const [source, setSource] = useState(null);
   const [mode, setMode] = useState("trending"); // "trending" | "search"
 
-  
   useEffect(() => {
     loadTrending();
   }, []);
@@ -51,6 +51,7 @@ export default function Home() {
 
       setInterpreted(data.interpreted);
       setProducts(data.products);
+      setSource(data.source || null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -115,6 +116,9 @@ export default function Home() {
                   {interpreted.sort === "SALE_PRICE_DESC" && "Priciest first"}
                   {interpreted.sort === "LAST_VOLUME_DESC" && "Best sellers"}
                 </span>
+                {source === "live" && (
+                  <span className="chip">🔎 fresh search</span>
+                )}
               </div>
             </div>
           )}

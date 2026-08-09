@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   try {
     const supabase = getSupabase();
 
-    
     const { data, error } = await supabase
       .from("products")
       .select("*")
